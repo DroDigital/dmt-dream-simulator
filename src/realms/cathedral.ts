@@ -55,10 +55,11 @@ export class PrismCathedral extends Realm {
       }
     }
     // light shafts: additive slanted boxes
-    const shaftMat = this.mat('shaft', { emissive: '#fff4e0', emissiveIntensity: 0.08, unlit: true, additive: true, noFog: true });
+    const shaftMat = this.mat('shaft', { emissive: '#fff4e0', emissiveIntensity: 0.035, unlit: true, additive: true, noFog: true });
     for (let z = -P * 1.5 + 8; z < P * 1.5; z += 16) {
+      if (Math.abs(z - 30) < 10) continue; // keep the arrival clear
       const s = new Shape(); s.box(shaftMat, 2.6, 24, 3, 0, 0, 0);
-      const o = this.place(s.build(), -2, 10, z, 0);
+      const o = this.place(s.build(), -4.5, 10, z, 0);
       o.rotation.z = 0.5;
       this.dyn(o);
       this.shafts.push(o);

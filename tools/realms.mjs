@@ -10,7 +10,7 @@ for (const r of realms) {
   const logs = [];
   page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') logs.push(m.type() + ': ' + m.text().slice(0, 300)); });
   page.on('pageerror', (e) => logs.push('pageerror: ' + e.message));
-  const url = r === 'flat' ? `http://localhost:5173/?webgl&auto&fresh&flat${extra}` : `http://localhost:5173/?webgl&auto&fresh&realm=${r}${extra}`;
+  const url = r === 'flat' ? `${process.env.HOST ?? 'http://localhost:5174'}/?webgl&auto&fresh&flat${extra}` : `${process.env.HOST ?? 'http://localhost:5174'}/?webgl&auto&fresh&realm=${r}${extra}`;
   await page.goto(url);
   await page.waitForTimeout(+(process.env.WAIT ?? 12000));
   await page.screenshot({ path: `screenshots/realm-${r}${process.env.TAG ?? ''}.png` });

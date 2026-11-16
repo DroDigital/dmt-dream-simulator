@@ -12,10 +12,10 @@ export class Threshold extends Realm {
       ...this.env,
       skyTop: '#c8c0e8', skyHorizon: '#fff4e8', skyBottom: '#a8a0c8',
       fog: '#e8e0f0', fogNear: 30, fogFar: 200, sunDir: [0, 0.6, -1], sunColor: '#fff0e0',
-      skyAmb: '#b8b0d0', groundAmb: '#8a80a8', bloom: 1.0, bloomThreshold: 0.85, godrays: 1.5, glyph: 0.25, trail: 0.8, kaleido: 0.6, wobble: 0.6, mandala: 1.5, stars: 0,
+      skyAmb: '#9890b8', groundAmb: '#6a6088', bloom: 0.6, bloomThreshold: 0.9, godrays: 0.6, glyph: 0.25, trail: 0.5, kaleido: 0.4, wobble: 0.6, mandala: 1.5, stars: 0,
     };
     const m = M(this);
-    const white = this.mat('th-white', { map: this.tex('marble'), color: '#ffffff', film: 0.6 });
+    const white = this.mat('th-white', { map: this.tex('marble'), color: '#d8d0e8', film: 0.3 });
     // a long path of floating stones towards the door
     for (let i = 0; i < 40; i++) {
       const s = new Shape(); s.cyl(white, 1.6, 1.2, 0.5, 0, -0.25, 0, { seg: 8 });
@@ -80,10 +80,10 @@ export class ChorusRoom extends Realm {
       ...this.env,
       skyTop: '#fdf6ff', skyHorizon: '#ffd0ef', skyBottom: '#c7e3ff',
       fog: '#f8eaff', fogNear: 15, fogFar: 80, sunDir: [0.2, 1, 0.1], sunColor: '#fff0f8',
-      skyAmb: '#ffe8f8', groundAmb: '#d8c8ff', bloom: 1.4, godrays: 0.8, trail: 0.7, kaleido: 0.5,
+      skyAmb: '#c8b0d0', groundAmb: '#8a78b0', bloom: 0.7, bloomThreshold: 0.9, godrays: 0.4, trail: 0.5, kaleido: 0.35,
     };
     const m = M(this);
-    const wall = this.mat('ch-wall', { map: this.tex('marble'), color: '#fff8ff', film: 0.5 });
+    const wall = this.mat('ch-wall', { map: this.tex('marble'), color: '#b8a8c8', film: 0.4 });
     const room = new Shape();
     room.cyl(wall, 18, 18, 0.4, 0, -0.2, 0, { seg: 32, uv: 4 });
     room.add(wall, new THREE.CylinderGeometry(18, 18, 14, 32, 1, true).scale(-1, 1, 1), 0, 7, 0);
