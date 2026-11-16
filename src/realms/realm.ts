@@ -39,9 +39,9 @@ export const DEFAULT_ENV: Env = {
   skyTop: '#2a3a7a', skyHorizon: '#ffc8a8', skyBottom: '#1a1428',
   fog: '#c8c0d8', fogNear: 25, fogFar: 160, fogHeight: 0, fogBase: 0,
   sunDir: [0.3, 0.5, -0.8], sunColor: '#fff0d8', skyAmb: '#8a90b8', groundAmb: '#4a4050',
-  bloom: 0.9, bloomThreshold: 0.72, godrays: 0, glyph: 0, glyphCell: 8, glyphRow: 0,
-  trail: 0.55, kaleido: 0.22, tape: 0, wobble: 0, stars: 0.5, mandala: 0.6,
-  fringe: 1, vignette: 0.45, grade: 0.5, affine: 0.7, levels: 6, wind: 1,
+  bloom: 0.75, bloomThreshold: 0.85, godrays: 0, glyph: 0, glyphCell: 8, glyphRow: 0,
+  trail: 0.55, kaleido: 0.16, tape: 0, wobble: 0, stars: 0.5, mandala: 0.6,
+  fringe: 1, vignette: 0.45, grade: 0.35, affine: 0.45, levels: 10, wind: 1,
 };
 
 export interface Entity {
@@ -110,10 +110,29 @@ export abstract class Realm {
   init(hooks: GameHooks) {
     this.hooks = hooks;
     this.build();
+    this.clearSpawn();
     batchStatic(this.root, this.keep);
     this.scene.updateMatrixWorld(true);
     this.physics.step();
     this.built = true;
+  }
+
+  /** Nothing linkable may stand where dreamers arrive. */
+  clearSpawn(radius = 2.2) {
+    this.physics.step();
+    const R = (this.physics as any).world.constructor;
+    void R;
+    const p = this.spawn.pos;
+    for (const l of [...this.linkList]) {
+      if (l.special || l.lantern || l.object === this.landmark) continue;
+      const hit = l.colliders.some((c) => {
+        const t = c.translation();
+        const he = (c as any).halfExtents?.() ?? { x: 0.5, y: 0.5, z: 0.5 };
+        const r = Math.max(he.x ?? 0.5, he.z ?? 0.5, (c as any).radius?.() ?? 0);
+        return Math.hypot(t.x - p.x, t.z - p.z) < radius + r && t.y - (he.y ?? 1) < p.y + 2 && t.y + (he.y ?? 1) > p.y - 0.5;
+      });
+      if (hit) { l.object.visible = false; this.removeLinkable(l); l.object.parent?.remove(l.object); }
+    }
   }
 
   // ── materials and textures ────────────────────────────────────────────
@@ -226,6 +245,13 @@ export abstract class Realm {
 
   /** Flat ground with a trimesh collider; returns mesh. */
   ground(geo: THREE.BufferGeometry, m: THREE.Material, collide = true): THREE.Mesh {
+    // big flat planes are subdivided so affine texture wobble stays a wobble
+    const pp = (geo as any).parameters;
+    if ((geo as any).type === 'PlaneGeometry' && pp && pp.widthSegments === 1 && pp.width * pp.height > 400) {
+      const sub = new THREE.PlaneGeometry(pp.width, pp.height, Math.min(48, Math.ceil(pp.width / 6)), Math.min(48, Math.ceil(pp.height / 6)));
+      sub.rotateX(-Math.PI / 2);
+      geo = sub;
+    }
     const s = new Shape().add(m, geo).build();
     const mesh = s.children[0] as THREE.Mesh;
     this.root.add(mesh);

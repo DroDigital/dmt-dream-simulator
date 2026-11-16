@@ -80,7 +80,7 @@ export class StaticField extends Realm {
     this.solid(chair);
     this.quiet = { pos: new THREE.Vector3(18, chair.position.y, 20), radius: 2 };
     this.spawn.pos.set(0, this.heightAt(0, 0) + 0.2, 0);
-    this.spawn.yaw = Math.PI;
+    this.spawn.yaw = 0;
     this.killY = -20;
     dress(this, {
       lamps, phone: { pos: new THREE.Vector3(-10, this.heightAt(-10, 5), 5), yaw: 0.5 },

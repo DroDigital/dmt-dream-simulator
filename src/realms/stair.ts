@@ -93,7 +93,7 @@ export class TidalStair extends Realm {
     this.drifts = new Drifters(this, new THREE.Vector3(0, 6, z / 2), Math.round(30 * this.density), 50, 20);
     this.addEntity(this.drifts);
     this.spawn.pos.set(0, top + 0.1, 8);
-    this.spawn.yaw = Math.PI;
+    this.spawn.yaw = 0;
     this.quiet = { pos: new THREE.Vector3(0, top - 20 * 3 * rise, -3 * (20 * run + 3.6) - 1.8), radius: 3 };
     this.killY = -30;
     dress(this, {

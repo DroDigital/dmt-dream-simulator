@@ -1,0 +1,13 @@
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const pw = require('/opt/node-tools/node_modules/playwright');
+const browser = await pw.chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const page = await browser.newPage({ viewport: { width: 640, height: 360 } });
+const logs = [];
+page.on('console', (m) => logs.push(m.type() + ': ' + m.text().slice(0, 400)));
+page.on('pageerror', (e) => logs.push('pageerror: ' + e.message + e.stack));
+await page.goto(process.argv[2]);
+await page.waitForTimeout(+process.argv[3] || 8000);
+console.log(await page.evaluate(process.argv[4] || '1'));
+console.log(logs.filter(l => !l.includes('GL Driver') && !l.includes('vite')).slice(0, 20).join('\n'));
+await browser.close();

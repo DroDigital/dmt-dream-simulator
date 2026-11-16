@@ -77,7 +77,7 @@ export class TheVeins extends Realm {
     const al = new Shape(); al.sphere(flesh2, 3, 0, 0, 0, { w: 10, h: 6, sy: 0.8 });
     this.place(al.build(), -23, 0, -21);
     this.spawn.pos.set(0, 0.6, 10);
-    this.spawn.yaw = Math.PI;
+    this.spawn.yaw = 0;
     this.killY = -15;
     dress(this, {
       lamps: this.organ.map((o) => new THREE.Vector3(o.position.x, 8, -28)).slice(0, 6), lf: { centre: new THREE.Vector3(0, 0, 0), radius: 15, count: 1 },

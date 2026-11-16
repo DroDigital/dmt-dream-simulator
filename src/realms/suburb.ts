@@ -112,7 +112,7 @@ export class EveningSuburb extends Realm {
     }
     this.thinSpots.push(new THREE.Vector3(9, 1, 0)); // shop windows
     this.spawn.pos.set(0, 0.1, 0);
-    this.spawn.yaw = Math.PI;
+    this.spawn.yaw = 0;
     this.quiet = { pos: new THREE.Vector3(-8.4, 0, 12), radius: 2 };
     this.killY = -20;
     dress(this, {

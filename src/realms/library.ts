@@ -74,7 +74,7 @@ export class DrownedLibrary extends Realm {
     this.addEntity(new BookFish(this, new THREE.Vector3(0, 1, 0), Math.round(70 * this.density), L / 2 - 4));
     if (!this.laws.empty) this.addEntity(new Drifters(this, new THREE.Vector3(0, 4, 0), 8, 20, 8));
     this.spawn.pos.set(0, 0.1, 6);
-    this.spawn.yaw = Math.PI;
+    this.spawn.yaw = 0;
     this.quiet = { pos: new THREE.Vector3(0, 0, 1.6), radius: 1.6 };
     this.killY = -20;
     dress(this, {

@@ -71,7 +71,7 @@ export class GlyphDesert extends Realm {
     }
     this.quiet = { pos: new THREE.Vector3(30, this.heightAt(30, 30), 30), radius: 3 };
     this.spawn.pos.set(0, this.heightAt(0, 0) + 0.3, 0);
-    this.spawn.yaw = Math.PI;
+    this.spawn.yaw = 0;
     this.killY = -30;
     dress(this, {
       lf: { centre: new THREE.Vector3(0, 0, 0), radius: 25, count: 1 },

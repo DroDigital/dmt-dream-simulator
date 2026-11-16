@@ -178,8 +178,8 @@ export class LanternFlat extends Realm {
     this.place(shelf.build(), 1.8, 1.3, D / 2 - 0.2);
     for (let i = 0; i < 12; i++) this.souvenirSpots.push(new THREE.Vector3(0.75 + (i % 6) * 0.42, 1.36 + Math.floor(i / 6) * 0.0, D / 2 - 0.2 - Math.floor(i / 6) * 0.12));
 
-    this.spawn.pos.set(0, 0.05, 1.2);
-    this.spawn.yaw = Math.PI; // facing the window
+    this.spawn.pos.set(0, 0.05, -0.8);
+    this.spawn.yaw = 0; // facing the window
     this.quiet = { pos: new THREE.Vector3(-1.6, 0, 1.4), radius: 1.5 };
     this.killY = -10;
     dress(this, { lamps });

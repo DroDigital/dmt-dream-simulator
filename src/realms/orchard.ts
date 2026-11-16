@@ -101,7 +101,7 @@ export class CloudOrchard extends Realm {
     this.quiet = { pos: new THREE.Vector3(islands[1].x, islands[1].y, islands[1].z), radius: 2.5 };
     this.addEntity(new Drifters(this, new THREE.Vector3(0, 4, 0), Math.round(24 * this.density), 60, 16));
     this.spawn.pos.set(0, 0.2, 6);
-    this.spawn.yaw = Math.PI;
+    this.spawn.yaw = 0;
     this.killY = -30;
     dress(this, {
       lamps, lf: { centre: new THREE.Vector3(0, 0, 0), radius: 10, count: 3 },

@@ -29,7 +29,7 @@ export class Threshold extends Realm {
     (this.landmark.userData.linkable as any).special = { type: 'threshold' };
     this.addEntity(new Drifters(this, new THREE.Vector3(0, 5, -60), 40, 50, 20));
     this.spawn.pos.set(0, 0.2, 0);
-    this.spawn.yaw = Math.PI;
+    this.spawn.yaw = 0;
     this.killY = -40;
     this.quiet = { pos: new THREE.Vector3(0, 0, 0), radius: 2 };
     void m;
@@ -64,7 +64,7 @@ export class Orrery extends Realm {
       this.dyn(o);
       this.planets.push({ obj: o, r, s: 0.05 / (1 + i * 0.4), ph: i * 1.7 });
     }
-    this.spawn.pos.set(0, 0.2, 40); this.spawn.yaw = Math.PI;
+    this.spawn.pos.set(0, 0.2, 40); this.spawn.yaw = 0;
     this.quiet = { pos: new THREE.Vector3(0, 0, 58), radius: 2 };
     this.killY = -30;
     dress(this, { lf: { centre: new THREE.Vector3(0, 0, 30), radius: 15, count: 3 }, phone: { pos: new THREE.Vector3(3, 0, 44), yaw: 0 } });
@@ -100,7 +100,7 @@ export class ChorusRoom extends Realm {
     (this.bell.userData.linkable as any).chorus = 2;
     this.dyn(this.bell);
     for (let i = 0; i < 6; i++) this.addEntity(new Lanternfolk(this, new THREE.Vector3(Math.cos(i) * 10, 0, Math.sin(i) * 10), 6));
-    this.spawn.pos.set(0, 0.2, 12); this.spawn.yaw = Math.PI;
+    this.spawn.pos.set(0, 0.2, 12); this.spawn.yaw = 0;
     this.quiet = { pos: new THREE.Vector3(0, 0, 4), radius: 2 };
     this.killY = -20;
   }

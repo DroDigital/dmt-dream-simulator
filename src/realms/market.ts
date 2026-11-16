@@ -68,7 +68,7 @@ export class LanternMarket extends Realm {
     this.solid(this.root.children[this.root.children.length - 1]);
     this.quiet = { pos: new THREE.Vector3(40, 0, 34), radius: 2.2 };
     this.spawn.pos.set(0, 0.1, 30);
-    this.spawn.yaw = Math.PI;
+    this.spawn.yaw = 0;
     this.killY = -20;
     dress(this, {
       lamps, lf: { centre: new THREE.Vector3(0, 0, 0), radius: 36, count: party ? 22 : 14 },

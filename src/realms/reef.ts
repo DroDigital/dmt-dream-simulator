@@ -116,7 +116,7 @@ export class FractalReef extends Realm {
     linked(this, vending(this, m, '#3a8aa0'), 8, this.heightAt(8, -8) - 0.4, -8, 0.6, ['machine', 'water'], 'vending').object.rotation.z = 0.2;
     this.addEntity(new Drifters(this, new THREE.Vector3(0, 6, 0), Math.round(30 * this.density), 50, 14));
     this.spawn.pos.set(0, this.heightAt(0, 0) + 0.2, 0);
-    this.spawn.yaw = Math.PI;
+    this.spawn.yaw = 0;
     this.killY = -20;
     dress(this, {
       lamps: [new THREE.Vector3(22, 2, 18)], lf: { centre: new THREE.Vector3(0, 0, 0), radius: 15, count: 2 },

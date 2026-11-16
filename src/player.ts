@@ -50,6 +50,7 @@ export class Dreamer implements DreamerView {
   private pulseMats = new Map<THREE.Material, LoFiMaterial>();
   private pulsed: { l: Linkable; orig: THREE.Material[] } | null = null;
   tickCount = 0;
+  arrivedTick = -999;
   joinedAt = 0;
   apartSince = 0;
   lastTogether = 0;
@@ -90,6 +91,7 @@ export class Dreamer implements DreamerView {
     this.climbPushed = false;
     this.quietDone = false;
     this.sticky.clear();
+    this.arrivedTick = this.tickCount;
     this.gazeTarget = null; this.gazeTime = 0;
     // others see you as a soft glowing figure
     if (!this.figures.has(realm.key)) {
@@ -189,6 +191,8 @@ export class Dreamer implements DreamerView {
       if (!l || seen.has(l)) continue;
       seen.add(l);
     }
+    // a short grace after arriving, so a link never bounces you straight on
+    if (this.tickCount - this.arrivedTick < 30) seen.clear();
     for (const l of seen) {
       if (fx.sticky && !l.special) {
         const tt = (this.sticky.get(l) ?? 0) + dt;

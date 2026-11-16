@@ -134,7 +134,7 @@ export class PanePost {
       time: uniform(0), tProgress: uniform(0), tKind: uniform(0), tActive: uniform(0),
       bloomStrength: uniform(0.9), bloomThreshold: uniform(0.72), godrays: uniform(0), sunScreen: uniform(new THREE.Vector2(0.5, 0.3)),
       glyph: uniform(0), glyphCell: uniform(8), glyphRow: uniform(0),
-      trail: uniform(0.6), trailDecay: uniform(0.82), trailZoom: uniform(0.004), trailRot: uniform(0.00175),
+      trail: uniform(0.5), trailDecay: uniform(0.74), trailZoom: uniform(0.004), trailRot: uniform(0.00175),
       grade: uniform(0.55), gradeW: uniform(new THREE.Vector4(0.25, 0.25, 0.25, 0.25)), hueRot: uniform(0),
       fringe: uniform(1), vignette: uniform(0.45), grain: uniform(0.035), kaleido: uniform(0.25),
       mirror: uniform(0), tape: uniform(0), staticAmt: uniform(0), fadeColor: uniform(new THREE.Color(1, 1, 1)), fadeAmount: uniform(0),
@@ -211,7 +211,7 @@ export class PanePost {
         const pix = floor(pq.mul(u.lowSize));
         const bd = bay.sample(pix.div(4.0)).r;
         const g = sqrt(clamp(cc, 0.0, 1.0));
-        const qq = floor(g.mul(u.levels.sub(1.0)).add(bd)).div(u.levels.sub(1.0));
+        const qq = floor(g.mul(u.levels.sub(1.0)).add(bd.mul(0.85).add(0.075))).div(u.levels.sub(1.0));
         return qq.mul(qq).add(max(cc.sub(1.0), 0.0));
       };
 
@@ -275,7 +275,7 @@ export class PanePost {
       const hc = q.sub(0.5);
       const cs = cos(u.trailRot), sn = sin(u.trailRot);
       const hq = vec2(hc.x.mul(cs).sub(hc.y.mul(sn)), hc.x.mul(sn).add(hc.y.mul(cs))).mul(float(1.0).sub(u.trailZoom)).add(0.5);
-      const h = hist.sample(hq).rgb;
+      const h = min(hist.sample(hq).rgb, vec3(1.1));
       col.assign(mix(col, max(col, h.mul(u.trailDecay)), u.trail));
 
       // resonance grade: four LUTs blended by chart position

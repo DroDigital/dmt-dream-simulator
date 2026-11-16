@@ -119,7 +119,7 @@ export class NightSchool extends Realm {
     this.quiet = { pos: pianoPos.clone(), radius: 2 };
     const sp = (0 - N / 2 + 0.5) * S;
     this.spawn.pos.set(sp, 0.1, sp + 1);
-    this.spawn.yaw = Math.PI;
+    this.spawn.yaw = 0;
     this.killY = -10;
     dress(this, {
       lamps, lf: { centre: new THREE.Vector3(sp, 0, sp), radius: 2, count: 1 },

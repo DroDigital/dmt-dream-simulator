@@ -91,7 +91,7 @@ export class PrismCathedral extends Realm {
     const bucket = new Shape(); bucket.cyl(m.metal, 0.3, 0.25, 0.45, 0, 0.22, 0, { color: '#e0c040' }); bucket.cyl(m.wood, 0.03, 0.03, 1.4, 0.1, 0.9, 0, { rz: 0.2, seg: 4 });
     linked(this, bucket.build(), -W / 2 + 1.6, 0, 20, 0, ['water'], 'bucket', 'cyl');
     this.spawn.pos.set(0, 0.1, 30);
-    this.spawn.yaw = Math.PI;
+    this.spawn.yaw = 0;
     this.quiet = { pos: new THREE.Vector3(4, 0, -12), radius: 1.8 };
     this.killY = -20;
     this.flatSunscreen.set(0.5, 0.15);

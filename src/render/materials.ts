@@ -134,7 +134,7 @@ export function makeLoFi(o: LoFiOptions = {}): LoFiMaterial {
   const n = normalWorld;
   const lambert = max(dot(n, G.sunDir), 0.0);
   const hemi = mix(G.groundAmb, G.skyAmb, n.y.mul(0.5).add(0.5));
-  const light = varying(hemi.add(G.sunColor.mul(lambert)));
+  const light = varying(hemi.mul(0.72).add(G.sunColor.mul(lambert).mul(0.62)));
   const viewDepth = varying(positionView.z.negate());
   const worldY = varying(positionWorld.y);
 
