@@ -35,7 +35,8 @@ export class HistoryPass {
     this.rts = [new THREE.RenderTarget(1, 1, opts), new THREE.RenderTarget(1, 1, opts)];
     const I = (this.infoNode = texture(placeholder));
     const H = (this.prevNode = texture(placeholder));
-    const mat = new THREE.MeshBasicNodeMaterial();
+    // transparent + NoBlending so alpha (time since the last flip) is written through, not forced to 1
+    const mat = new THREE.MeshBasicNodeMaterial({ transparent: true, blending: THREE.NoBlending, depthTest: false, depthWrite: false });
     mat.colorNode = Fn(() => {
       const p = uv();
       const info = I.sample(p);
@@ -64,7 +65,12 @@ export class HistoryPass {
       const inGaze = smoothstep(u.gazeR, u.gazeR.mul(0.6), length(toC)).mul(u.gaze);
       const hys = u.hysteresis.mul(inGaze.add(1.0));
       const same = step(abs(want.sub(code)), 0.5);
-      const bigMove = step(hys, abs(l.sub(lastL))).mul(step(0.001, hys).max(step(u.holdFrames, 0.5)));
+      // Schmitt-style band: a fill glyph holds while l stays within its own
+      // brightness range widened by the hysteresis; edges compare to lastL
+      const lo = code.div(u.rampCount).sub(hys), hi = code.add(1.0).div(u.rampCount).add(hys);
+      const outOfBand = max(step(l, lo), step(hi, l));
+      const moved = mix(outOfBand, step(hys, abs(l.sub(lastL))), wasEdge);
+      const bigMove = moved.mul(step(0.001, hys)).max(step(u.holdFrames, 0.5).mul(step(hys, 0.0001)));
       // the *same* new choice must persist for holdFrames (pending = candidate + count/100)
       const cand = floor(pending.add(0.001));
       const cnt = floor(pending.sub(cand).mul(100.0).add(0.5));

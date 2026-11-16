@@ -32,7 +32,14 @@ async function main() {
   const sceneKind = q.get('scene') ?? 'room';
   const statue = new THREE.Group();
   let cube: THREE.Mesh | null = null;
-  if (sceneKind === 'cube') {
+  let strobe: any = null;
+  if (sceneKind === 'flash') {
+    // photosensitivity stress: a full-screen black/white strobe at 30 Hz
+    const m = makeLoFi({ color: '#ffffff', unlit: true, noFog: true, snap: false });
+    strobe = m;
+    const wall = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), m);
+    wall.position.z = -20; scene.add(wall);
+  } else if (sceneKind === 'cube') {
     // edge test: one lit cube against a flat background
     const bg = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), makeLoFi({ color: '#202a3a', unlit: true, noFog: true, snap: false }));
     bg.position.z = -60; scene.add(bg);
@@ -111,6 +118,8 @@ async function main() {
     } else { cam.position.set(0, 0, 0); cam.lookAt(0, 0, -1); }
     if (sceneKind === 'cube') { cam.position.set(0, 0, 0); cam.lookAt(0, 0, -1); }
     statue.rotation.y = t * 0.08;
+    if (strobe) strobe.uColor.value.setScalar(frame % 2 ? 1 : 0);
+    if (sceneKind === 'flash') { cam.position.set(0, 0, 0); cam.lookAt(0, 0, -1); }
     cam.aspect = W / H; cam.updateProjectionMatrix();
     G.snap.value.set(240, 135);
     renderer.setMRT(mrtNode);
@@ -198,6 +207,7 @@ async function main() {
       mrt.dispose();
       return { w: W, h: H, backend: (renderer.backend as any).isWebGPUBackend ? 'webgpu' : 'webgl', px: Array.from(px.filter((_, i) => i % 4 === 0)) };
     },
+    async rawHistory(n = 4) { const h = (suite as any).layers[1].hist; const rt = h.current; const px = await renderer.readRenderTargetPixelsAsync(rt, 0, 0, rt.width, rt.height); return Array.from(px.slice(0, n * 4)); },
     cellPx() { return style.depthCells ? style.cellSizes[1] : style.cellPx; },
     times() { return times.slice(); },
     style() { return style; },

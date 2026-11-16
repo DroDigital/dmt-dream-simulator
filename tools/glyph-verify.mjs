@@ -108,6 +108,16 @@ if (which.has('stability')) {
   await page.close();
 }
 
+// ── 3b. photosensitivity stress: a 30 Hz full-screen strobe ─────────────────
+if (which.has('stability') || which.has('flash')) {
+  const page = await open('&scene=flash&preset=desert-day');
+  await page.evaluate(() => lab.setLiving(false));
+  const r = await panRun(page, 120);
+  out.results.strobe = { strobeHz: 30, worstFlipsPerSecond: r.worstFlipsPerSecond, pass: r.worstFlipsPerSecond <= 3 };
+  console.log('strobe', out.results.strobe);
+  await page.close();
+}
+
 // ── 4. snapshot tests per preset ──────────────────────────────────────────
 if (which.has('snapshots')) {
   const page = await open('&preset=desert-day');

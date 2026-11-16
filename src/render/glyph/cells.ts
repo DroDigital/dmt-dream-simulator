@@ -80,10 +80,14 @@ export class CellPass {
     const infoMat = new THREE.MeshBasicNodeMaterial();
     infoMat.colorNode = Fn(() => {
       const K = [-1, 0, 1];
+      const cells0 = u.paneSize.div(u.cellPx);
       const ld: any[] = [], ll: any[] = [], nn: any[] = [];
       for (const y of K) for (const x of K) {
         const p = cellUV(vec2(x, y));
-        ld.push(linDepth(p)); ll.push(lumAt(p)); nn.push(nAt(p));
+        // brightness: average 4 taps inside each cell so swimming texels can't alias
+        const q = vec2(0.25).div(cells0);
+        const la = lumAt(p.add(q.mul(vec2(-1, -1)))).add(lumAt(p.add(q.mul(vec2(1, -1))))).add(lumAt(p.add(q.mul(vec2(-1, 1))))).add(lumAt(p.add(q.mul(vec2(1, 1))))).mul(0.25);
+        ld.push(linDepth(p)); ll.push(la); nn.push(nAt(p));
       }
       // 3×3 pre-blurred brightness, so dither and jitter never pick glyphs
       const wts = [1, 2, 1, 2, 4, 2, 1, 2, 1];
