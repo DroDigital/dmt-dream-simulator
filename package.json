@@ -1,0 +1,30 @@
+{
+  "name": "dmt-dream-simulator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "DMT: Dream Simulator (Dream Memory Transit) — a first-person playable dream for 1–4 dreamers on one screen.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:visual": "node tools/smoke.mjs"
+  },
+  "dependencies": {
+    "@dimforge/rapier3d-compat": "^0.21.0",
+    "@fontsource/cormorant-garamond": "^5.3.0",
+    "@fontsource/vt323": "^5.3.0",
+    "idb-keyval": "^6.3.0",
+    "simplex-noise": "^4.0.3",
+    "three": "^0.187.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.187.0",
+    "tweakpane": "^4.0.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0"
+  }
+}
