@@ -7,7 +7,7 @@ const require = createRequire(import.meta.url);
 let pw; try { pw = require('playwright'); } catch { pw = require('/opt/node-tools/node_modules/playwright'); }
 
 const which = new Set(process.argv.slice(2).length ? process.argv.slice(2) : ['edge', 'stability', 'snapshots', 'perf']);
-const BASE = process.env.LAB ?? 'http://localhost:5173/glyph-lab.html?webgl&nopanel&manual';
+const BASE = process.env.LAB ?? 'http://localhost:5174/glyph-lab.html?webgl&nopanel&manual';
 const W = 960, H = 540;
 const out = { when: new Date().toISOString(), results: {} };
 const browser = await pw.chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });

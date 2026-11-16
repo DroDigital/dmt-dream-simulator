@@ -50,20 +50,27 @@ export class HistoryPass {
         binv = mix(binv, n.z, take);
       }
       const l = info.x;
-      const isEdge = step(u.threshold, strength);
+      const prev = H.sample(p);
+      const code = prev.x, lastL = prev.y, pending = prev.z, sinceFlip = prev.w;
+      // edge hysteresis: an edge cell stays an edge until the edge clearly fades
+      const wasEdge = step(9.5, code);
+      const isEdge = step(u.threshold.mul(mix(float(1.15), float(0.75), wasEdge)), strength);
       const bin = floor(binv.mul(4.0));
       const fill = floor(min(l, 0.999).mul(u.rampCount));
       const fillL = max(fill, u.shadowLift);
       const want = mix(fillL, bin.add(10.0), isEdge);
 
-      const prev = H.sample(p);
-      const code = prev.x, lastL = prev.y, counter = prev.z, sinceFlip = prev.w;
       const toC = p.sub(0.5).mul(vec2(u.aspect, 1.0));
       const inGaze = smoothstep(u.gazeR, u.gazeR.mul(0.6), length(toC)).mul(u.gaze);
       const hys = u.hysteresis.mul(inGaze.add(1.0));
       const same = step(abs(want.sub(code)), 0.5);
-      const bigMove = step(hys, abs(l.sub(lastL)));
-      const persisted = step(u.holdFrames, counter.add(1.0));
+      const bigMove = step(hys, abs(l.sub(lastL))).mul(step(0.001, hys).max(step(u.holdFrames, 0.5)));
+      // the *same* new choice must persist for holdFrames (pending = candidate + count/100)
+      const cand = floor(pending.add(0.001));
+      const cnt = floor(pending.sub(cand).mul(100.0).add(0.5));
+      const sameCand = step(abs(want.sub(cand)), 0.5);
+      const newCnt = mix(float(1.0), cnt.add(1.0), sameCand);
+      const persisted = step(u.holdFrames, newCnt);
       let doSwitch: any = same.oneMinus().mul(max(bigMove, persisted));
       // photosensitivity: dark↔bright flips at most every 0.34 s (≤ 3/s)
       const isDark = (c: any) => step(c, 1.5).mul(step(c, 9.5));
@@ -73,11 +80,11 @@ export class HistoryPass {
       doSwitch = doSwitch.mul(blocked.oneMinus());
       const newCode = mix(code, want, doSwitch);
       const newLastL = mix(lastL, l, max(doSwitch, same));
-      const newCounter = mix(counter.add(1.0), float(0.0), max(doSwitch, same));
+      const newPending = mix(want.add(min(newCnt, 60.0).div(100.0)), newCode, max(doSwitch, same));
       const newSince = mix(min(sinceFlip.add(u.dt), 10.0), float(0.0), flip.mul(doSwitch));
-      const out = vec4(newCode, newLastL, newCounter, newSince);
+      const out = vec4(newCode, newLastL, newPending, newSince);
       // reset on link transitions and camera cuts
-      return mix(out, vec4(want, l, 0.0, 10.0), u.reset);
+      return mix(out, vec4(want, l, want, 10.0), u.reset);
     })();
     this.quad = new THREE.QuadMesh(mat);
   }

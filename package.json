@@ -10,7 +10,12 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:visual": "node tools/smoke.mjs"
+    "test:visual": "node tools/smoke.mjs",
+    "dev:verify": "vite --config vite.verify.config.ts",
+    "validate-data": "tsx tools/validate-data.ts",
+    "verify:glyph": "node tools/glyph-verify.mjs",
+    "shots": "node tools/realms.mjs",
+    "capture": "node tools/capture.mjs"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "^0.21.0",
@@ -21,6 +26,7 @@
     "three": "^0.187.0"
   },
   "devDependencies": {
+    "@types/node": "^26.6.6",
     "@types/three": "^0.187.0",
     "tweakpane": "^4.0.5",
     "typescript": "^7.0.2",

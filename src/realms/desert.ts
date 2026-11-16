@@ -19,7 +19,7 @@ export class GlyphDesert extends Realm {
     this.env = {
       ...this.env,
       skyTop: '#05040a', skyHorizon: deep ? '#2a1a10' : '#6a5030', skyBottom: '#0a0806',
-      fog: deep ? '#0a0806' : '#4a3a28', fogNear: 30, fogFar: 200, sunDir: [0.6, 0.35, -0.5], sunColor: '#ffd8a0',
+      fog: deep ? '#0a0806' : '#6a5038', fogNear: 40, fogFar: 240, sunDir: [0.6, 0.35, -0.5], sunColor: '#ffd8a0',
       skyAmb: '#8a7a6a', groundAmb: '#3a2a1a', bloom: 0.9, glyph: 1, glyphCell: 9, trail: 0.4, kaleido: 0.1, stars: 1.2, mandala: 0.9, grade: 0.4,
     };
     const m = M(this);

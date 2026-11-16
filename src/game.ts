@@ -188,7 +188,11 @@ export class Game implements GameHooks {
     if (this.url.has('auto')) this.autoStart();
     else this.ui.show('title');
     this.last = performance.now() / 1000;
-    this.renderer.setAnimationLoop((ms: number) => this.frame(ms));
+    if (this.url.has('capture')) {
+      // deterministic capture: frames advance only when asked, at a fixed 30 fps
+      let ms = performance.now();
+      (window as any).capFrame = (n = 1) => { for (let i = 0; i < n; i++) { ms += 1000 / 30; this.frame(ms); } };
+    } else this.renderer.setAnimationLoop((ms: number) => this.frame(ms));
     (window as any).dmt = this;
   }
 
@@ -264,7 +268,7 @@ export class Game implements GameHooks {
     p.joinedAt = this.time;
     this.players.push(p);
     this.players.sort((a, b) => a.slot - b.slot);
-    this.panes.push(this.makePane());
+    if (this.panes.length < this.players.length) this.panes.push(this.makePane());
     if (this.players.length === 4) this.achieve('four');
     if (this.phase === 'flat' || this.phase === 'title') {
       const off = new THREE.Vector3((slot - 1.5) * 0.9, 0, 0);
@@ -369,6 +373,7 @@ export class Game implements GameHooks {
   enterFlat() {
     this.phase = 'flat';
     this.lying.clear();
+    this.echoes.clear();
     for (const r of this.realms.values()) r.dispose();
     this.realms.clear();
     this.buildFlat();
@@ -733,6 +738,7 @@ export class Game implements GameHooks {
       if (this.players.length > 1) this.phoneListen.set(p.slot, this.time + 12);
       return;
     }
+    if (sp?.type === 'futon' && this.phase === 'flat') { this.lieDown(p, l); return; }
     if (sp?.type !== 'interact' || this.phase !== 'flat') return;
     const s = this.save;
     switch (sp.interact) {

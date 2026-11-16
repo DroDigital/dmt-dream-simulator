@@ -105,12 +105,12 @@ async function main() {
     G.time.value = t;
     if (state.pan) {
       // scripted slow pan
-      const a = Math.sin(t * 0.25) * 0.35;
+      const a = Math.sin(t * 0.12) * 0.25; // ≈0.4 px per frame at 960 px: a slow pan
       cam.position.set(Math.sin(a) * 9, 2.2, Math.cos(a) * 9 - 4);
       cam.lookAt(0, 2.2, -4);
     } else { cam.position.set(0, 0, 0); cam.lookAt(0, 0, -1); }
     if (sceneKind === 'cube') { cam.position.set(0, 0, 0); cam.lookAt(0, 0, -1); }
-    statue.rotation.y = t * 0.2;
+    statue.rotation.y = t * 0.08;
     cam.aspect = W / H; cam.updateProjectionMatrix();
     G.snap.value.set(240, 135);
     renderer.setMRT(mrtNode);

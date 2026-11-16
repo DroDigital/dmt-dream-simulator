@@ -39,6 +39,8 @@ export class Input {
   /** devices that pressed something this frame (for drop-in join) */
   joins: DeviceId[] = [];
   lastKbm = 0;
+  /** scripted keyboard state for captures and bots */
+  scripted: Partial<PlayerInput> | null = null;
 
   constructor(private canvas: HTMLCanvasElement) {
     addEventListener('keydown', (e) => {
@@ -89,6 +91,7 @@ export class Input {
     k.startHeld = this.startHeldKbm;
     k.any = this.pressed.size > 0 || this.mousePressed;
     if (!this.enabled) Object.assign(k, blank());
+    if (this.scripted) Object.assign(k, this.scripted);
     this.states.set('kbm', k);
     if (k.any) { this.joins.push('kbm'); this.lastKbm = performance.now(); }
     this.mousePressed = false;

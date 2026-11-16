@@ -108,8 +108,9 @@ export class NightSchool extends Realm {
       if (t === 'x' && this.rng.chance(0.3)) linked(this, desk(this, m), ox + 0.8, 0, oz + 0.8, this.rng.next() * 6, ['paper'], 'desk');
     }
     // landmark: the clock at the first crossing; the quiet place: the music room piano
-    const ck = new Shape(); ck.cyl(m.white, 0.6, 0.6, 0.1, 0, 0, 0, { rx: Math.PI / 2, seg: 20 }); ck.torus(m.dark, 0.6, 0.05, 0, 0, 0);
-    const clockObj = this.place(ck.build(), (0 - N / 2 + 0.5) * S, 2.6, (0 - N / 2 + 0.5) * S - CW + 0.05);
+    const ck = new Shape(); ck.cyl(m.white, 0.6, 0.6, 0.1, 0, 0, 0, { rx: Math.PI / 2, seg: 20 }); ck.torus(m.dark, 0.6, 0.05, 0, 0, 0); ck.cyl(m.dark, 0.02, 0.02, 0.7, 0, 0.95, 0, { seg: 4 });
+    // a station clock hanging from the ceiling of the first crossing
+    const clockObj = this.place(ck.build(), (0 - N / 2 + 0.5) * S, 2.65, (0 - N / 2 + 0.5) * S - 1.2);
     this.landmark = clockObj;
     const hand = new Shape(); hand.box(m.dark, 0.04, 0.45, 0.02, 0, 0.2, 0);
     this.clockHand = this.place(hand.build(), clockObj.position.x, 2.6, clockObj.position.z + 0.07);
