@@ -10,9 +10,9 @@ export class Threshold extends Realm {
   build() {
     this.env = {
       ...this.env,
-      skyTop: '#ffffff', skyHorizon: '#fff4e8', skyBottom: '#f0e8ff',
-      fog: '#fffaf4', fogNear: 20, fogFar: 160, sunDir: [0, 0.6, -1], sunColor: '#ffffff',
-      skyAmb: '#ffffff', groundAmb: '#e8e0f0', bloom: 1.8, bloomThreshold: 0.5, godrays: 1.5, glyph: 0.25, trail: 0.8, kaleido: 0.6, wobble: 0.6, mandala: 1.5, stars: 0,
+      skyTop: '#c8c0e8', skyHorizon: '#fff4e8', skyBottom: '#a8a0c8',
+      fog: '#e8e0f0', fogNear: 30, fogFar: 200, sunDir: [0, 0.6, -1], sunColor: '#fff0e0',
+      skyAmb: '#b8b0d0', groundAmb: '#8a80a8', bloom: 1.0, bloomThreshold: 0.85, godrays: 1.5, glyph: 0.25, trail: 0.8, kaleido: 0.6, wobble: 0.6, mandala: 1.5, stars: 0,
     };
     const m = M(this);
     const white = this.mat('th-white', { map: this.tex('marble'), color: '#ffffff', film: 0.6 });

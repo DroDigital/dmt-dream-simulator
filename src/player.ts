@@ -50,6 +50,7 @@ export class Dreamer implements DreamerView {
   private pulseMats = new Map<THREE.Material, LoFiMaterial>();
   private pulsed: { l: Linkable; orig: THREE.Material[] } | null = null;
   tickCount = 0;
+  lookCalm = 0;
   arrivedTick = -999;
   joinedAt = 0;
   apartSince = 0;
@@ -201,6 +202,8 @@ export class Dreamer implements DreamerView {
       } else out.touched.push(l);
     }
     for (const l of [...this.sticky.keys()]) if (!seen.has(l)) this.sticky.delete(l);
+    // gaze settle: how long the view has stayed put
+    this.lookCalm = Math.abs(inp.lookX) + Math.abs(inp.lookY) < 0.003 ? this.lookCalm + dt : 0;
     // stillness
     const moving = Math.abs(f) + Math.abs(s) > 0.05 || Math.abs(inp.lookX) > 0.002 || !this.grounded;
     this.stillTime = moving ? 0 : this.stillTime + dt;

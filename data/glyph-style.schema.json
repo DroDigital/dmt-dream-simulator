@@ -1,0 +1,266 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GlyphStyle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "mode",
+    "font",
+    "ramp",
+    "cellPx",
+    "depthCells",
+    "depthNear",
+    "depthFar",
+    "cellSizes",
+    "edgeThreshold",
+    "edgeDepthWeight",
+    "edgeNormalWeight",
+    "edgeLumaWeight",
+    "edgeThickness",
+    "backdropMode",
+    "backdropStrength",
+    "backdropBlur",
+    "colourMode",
+    "colourSaturation",
+    "colourBoost",
+    "black",
+    "white",
+    "gamma",
+    "contrast",
+    "coverage",
+    "invert",
+    "shadowLift",
+    "hysteresis",
+    "holdFrames",
+    "wind",
+    "ripples",
+    "gazeSettle",
+    "paper",
+    "glyphOpacity"
+  ],
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "mode": {
+      "enum": [
+        "ascii",
+        "braille",
+        "blocks"
+      ]
+    },
+    "font": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ramp": {
+      "type": "string",
+      "minLength": 2
+    },
+    "cellPx": {
+      "type": "number",
+      "minimum": 3,
+      "maximum": 32
+    },
+    "depthCells": {
+      "type": "boolean"
+    },
+    "depthNear": {
+      "type": "number",
+      "minimum": 0
+    },
+    "depthFar": {
+      "type": "number",
+      "minimum": 0
+    },
+    "cellSizes": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "minimum": 3,
+        "maximum": 32
+      },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "edgeThreshold": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 4
+    },
+    "edgeDepthWeight": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 4
+    },
+    "edgeNormalWeight": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 4
+    },
+    "edgeLumaWeight": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 4
+    },
+    "edgeThickness": {
+      "enum": [
+        1,
+        2
+      ]
+    },
+    "backdropMode": {
+      "enum": [
+        "blurred",
+        "black",
+        "original",
+        "transparent"
+      ]
+    },
+    "backdropStrength": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "backdropBlur": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 16
+    },
+    "colourMode": {
+      "enum": [
+        "full",
+        "mono",
+        "duotone",
+        "palette",
+        "phosphor"
+      ]
+    },
+    "colourSaturation": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 3
+    },
+    "colourBoost": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 4
+    },
+    "black": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "white": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "gamma": {
+      "type": "number",
+      "minimum": 0.1,
+      "maximum": 4
+    },
+    "contrast": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 2
+    },
+    "coverage": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "invert": {
+      "type": "boolean"
+    },
+    "shadowLift": {
+      "type": "boolean"
+    },
+    "hysteresis": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "holdFrames": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 60
+    },
+    "wind": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "speed",
+            "dir"
+          ],
+          "properties": {
+            "speed": {
+              "type": "number",
+              "minimum": 0
+            },
+            "dir": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          }
+        }
+      ]
+    },
+    "ripples": {
+      "type": "boolean"
+    },
+    "gazeSettle": {
+      "type": "boolean"
+    },
+    "paper": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "aberration",
+        "flutedGlass"
+      ],
+      "properties": {
+        "aberration": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "flutedGlass": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "glyphOpacity": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "phosphor": {
+      "enum": [
+        "green",
+        "amber"
+      ]
+    },
+    "scanlines": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "inkColour": {
+      "type": "string",
+      "pattern": "^#[0-9a-fA-F]{6}$"
+    }
+  }
+}

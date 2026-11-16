@@ -1,6 +1,6 @@
 import * as THREE from 'three/webgpu';
-import type RAPIER from '@dimforge/rapier3d-compat';
-import { Physics } from '../core/physics';
+import type RAPIERT from '@dimforge/rapier3d-compat';
+import { Physics, RAPIER } from '../core/physics';
 import type { Tag, RealmId } from '../data/types';
 import type { GameHooks, RealmContext, LinkSpecial, DreamerView } from '../core/types';
 import { TextureBank, type TexKind } from '../render/textures';
@@ -15,7 +15,7 @@ export interface Linkable {
   kind: string;
   tags: Tag[];
   object: THREE.Object3D;
-  colliders: RAPIER.Collider[];
+  colliders: RAPIERT.Collider[];
   meshes: THREE.Mesh[];
   chorus?: number;
   special?: LinkSpecial;
@@ -117,22 +117,20 @@ export abstract class Realm {
     this.built = true;
   }
 
-  /** Nothing linkable may stand where dreamers arrive. */
-  clearSpawn(radius = 2.2) {
+  /** Nothing linkable may stand where dreamers arrive (a physics overlap test). */
+  clearSpawn() {
     this.physics.step();
-    const R = (this.physics as any).world.constructor;
-    void R;
     const p = this.spawn.pos;
-    for (const l of [...this.linkList]) {
-      if (l.special || l.lantern || l.object === this.landmark) continue;
-      const hit = l.colliders.some((c) => {
-        const t = c.translation();
-        const he = (c as any).halfExtents?.() ?? { x: 0.5, y: 0.5, z: 0.5 };
-        const r = Math.max(he.x ?? 0.5, he.z ?? 0.5, (c as any).radius?.() ?? 0);
-        return Math.hypot(t.x - p.x, t.z - p.z) < radius + r && t.y - (he.y ?? 1) < p.y + 2 && t.y + (he.y ?? 1) > p.y - 0.5;
-      });
-      if (hit) { l.object.visible = false; this.removeLinkable(l); l.object.parent?.remove(l.object); }
-    }
+    const doomed = new Set<Linkable>();
+    // a fat capsule around where up to four dreamers appear
+    const shape = new RAPIER.Capsule(1.0, 2.0);
+    this.physics.world.intersectionsWithShape({ x: p.x + 0.6, y: p.y + 1.6, z: p.z + 0.4 }, { x: 0, y: 0, z: 0, w: 1 }, shape, (c) => {
+      const l = this.linkables.get(c.handle);
+      if (l && !l.special && !l.lantern && l.object !== this.landmark) doomed.add(l);
+      return true;
+    });
+    for (const l of doomed) { l.object.visible = false; this.removeLinkable(l); l.object.parent?.remove(l.object); }
+    if (doomed.size) this.physics.step();
   }
 
   // ── materials and textures ────────────────────────────────────────────
@@ -159,10 +157,10 @@ export abstract class Realm {
   }
 
   /** Static collider from an object's local bounding box (yaw-only OBB). */
-  solid(obj: THREE.Object3D, kind: 'box' | 'cyl' | 'ball' | 'mesh' = 'box'): RAPIER.Collider[] {
+  solid(obj: THREE.Object3D, kind: 'box' | 'cyl' | 'ball' | 'mesh' = 'box'): RAPIERT.Collider[] {
     obj.updateMatrixWorld(true);
     if (kind === 'mesh') {
-      const out: RAPIER.Collider[] = [];
+      const out: RAPIERT.Collider[] = [];
       obj.traverse((o) => { if ((o as THREE.Mesh).isMesh) out.push(this.physics.fixedMesh(o as THREE.Mesh)); });
       return out;
     }
@@ -188,7 +186,7 @@ export abstract class Realm {
   }
 
   /** Register an object as linkable: touching it carries you on. */
-  link(obj: THREE.Object3D, tags: Tag[], o: { kind: string; collide?: 'box' | 'cyl' | 'ball' | 'mesh' | 'none'; colliders?: RAPIER.Collider[]; chorus?: number; special?: LinkSpecial; noLink?: boolean; lantern?: boolean; thin?: boolean; mutable?: boolean } ): Linkable {
+  link(obj: THREE.Object3D, tags: Tag[], o: { kind: string; collide?: 'box' | 'cyl' | 'ball' | 'mesh' | 'none'; colliders?: RAPIERT.Collider[]; chorus?: number; special?: LinkSpecial; noLink?: boolean; lantern?: boolean; thin?: boolean; mutable?: boolean } ): Linkable {
     const colliders = o.colliders ?? (o.collide === 'none' ? [] : this.solid(obj, o.collide ?? 'box'));
     const meshes: THREE.Mesh[] = [];
     obj.traverse((m) => { if ((m as THREE.Mesh).isMesh) meshes.push(m as THREE.Mesh); });

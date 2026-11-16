@@ -59,7 +59,6 @@ export class TidalStair extends Realm {
     const plat = new Shape();
     plat.box(white, 16, 1, 14, 0, top - 0.5, 7, { uv: 3 });
     for (const x of [-7, 7]) for (const zz of [1, 13]) plat.cyl(white, 0.4, 0.45, 6, x, top + 3, zz, { seg: 8 });
-    plat.box(white, 16, 0.6, 14, 0, top + 6.2, 7, { uv: 3 });
     const pl = plat.build(); this.root.add(pl);
     for (const c of pl.children) this.physics.fixedMesh(c as THREE.Mesh);
     // mundane anchor: a vending machine and a bench on the landing

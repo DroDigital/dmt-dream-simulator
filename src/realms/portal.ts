@@ -3,6 +3,9 @@ import * as TSL from 'three/tsl';
 import { G } from '../render/materials';
 import { REALM_PALETTES } from '../render/palettes';
 import type { RealmId } from '../data/types';
+import { sharedAtlas } from '../render/glyph/atlas';
+import { preset } from '../render/glyph/styles';
+import { MODE_TABLE, ATLAS_ROWS, ATLAS_COLS } from '../render/glyph/modes';
 
 const T: any = TSL;
 const { Fn, uv, vec2, vec3, sin, cos, fract, floor, hash, mix, smoothstep, length, atan, abs, step, uniform } = T;
@@ -22,8 +25,11 @@ export function signalMaterial(target: RealmId, strength = 1): THREE.MeshBasicNo
   const a = uniform(pal[1]), b = uniform(pal[2]), c = uniform(pal[4]), d = uniform(pal[0]);
   const mat = new THREE.MeshBasicNodeMaterial();
   mat.fog = false;
-  mat.colorNode = Fn(() => {
-    const p = uv().toVar();
+  const tv = preset('tv-static');
+  const atlas = T.texture(sharedAtlas().texture);
+  const row = MODE_TABLE[tv.mode].row;
+  const signal = Fn(([p0]: any[]) => {
+    const p = p0.toVar();
     const t = G.time;
     const row = floor(p.y.mul(60.0));
     p.x.addAssign(hash(row.add(floor(t.mul(12.0)))).sub(0.5).mul(0.03));
@@ -45,8 +51,21 @@ export function signalMaterial(target: RealmId, strength = 1): THREE.MeshBasicNo
     }
     let col = mix(d, mix(a, b, p.y), v).add(c.mul(v.mul(0.3)));
     const scan = sin(p.y.mul(400.0)).mul(0.5).add(0.5);
-    col = col.mul(scan.mul(0.25).add(0.75)).add(vec3(hash(p.mul(300.0).add(t)).mul(0.12)));
+    const gp = floor(p.mul(300.0));
+    col = col.mul(scan.mul(0.25).add(0.75)).add(vec3(hash(gp.x.add(gp.y.mul(157.0)).add(floor(t.mul(30.0)).mul(7.0))).mul(0.12)));
     return col.mul(1.3 * strength);
+  });
+  // the screen passes through the tv-static glyph style: blocks, mono, scanlines
+  mat.colorNode = Fn(() => {
+    const cells = vec2(28.0, 20.0);
+    const cell = floor(uv().mul(cells));
+    const local = fract(uv().mul(cells));
+    const c = signal(cell.add(0.5).div(cells));
+    const l = T.clamp(T.luminance(c).sub(tv.black).div(tv.white - tv.black), 0.0, 0.999);
+    const idx = floor(l.mul(10.0));
+    const mask = atlas.sample(vec2(idx.add(local.x).div(ATLAS_COLS), T.float(row).add(local.y).div(ATLAS_ROWS))).x;
+    const scan = step(0.5, fract(uv().y.mul(cells.y).mul(2.0))).mul(tv.scanlines ?? 0.5).mul(0.35);
+    return mix(c.mul(0.08), mix(c, b.mul(l.add(0.2)), 0.6), mask).mul(T.float(1.0).sub(scan));
   })();
   return mat;
 }

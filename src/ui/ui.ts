@@ -246,12 +246,19 @@ export class UI {
         el('button', { onclick: () => exportPage(rec, names) }, 'Export page'))));
   }
 
-  photo(night: number) {
+  photo(night: number, presets: string[] = []) {
     const lenses = night >= 50;
     const lens = el('select') as HTMLSelectElement;
-    ['none', 'glyph', 'braille', 'blocks', 'tape', 'kaleido', 'mono', 'dream'].forEach((l, i) => { if (i === 0 || lenses) lens.append(el('option', { value: l }, l)); });
+    const opts = ['none', ...(lenses ? ['tape', 'kaleido', 'mono', 'dream', ...presets] : ['glyph'])];
+    opts.forEach((l) => lens.append(el('option', { value: l }, l)));
     lens.onchange = () => this.emit('photoLens', lens.value);
-    this.fill('photo', el('div', { class: 'bar' }, el('span', {}, 'photo mode'), lenses ? el('label', {}, 'lens', lens) : el('span', { style: 'opacity:.6' }, 'lenses at night 50'),
+    const slider = (label: string, key: string, min: number, max: number, step: number, val: number) => {
+      const i = el('input', { type: 'range', min, max, step, value: val }) as HTMLInputElement;
+      i.oninput = () => this.emit('photoStyle', key === 'cellPx' ? { cellPx: +i.value, cellSizes: [+i.value + 4, +i.value, Math.max(4, +i.value - 2)] } : { [key]: +i.value });
+      return el('label', {}, label, i);
+    };
+    this.fill('photo', el('div', { class: 'bar' }, el('span', {}, 'photo mode'), el('label', {}, lenses ? 'lens' : 'filter', lens),
+      slider('coverage', 'coverage', 0, 1, 0.05, 1), slider('contrast', 'contrast', 0, 2, 0.05, 0.4), slider('cell', 'cellPx', 4, 20, 1, 8),
       el('button', { onclick: () => this.emit('photoShoot') }, 'Take photo'), el('button', { onclick: () => this.emit('photoExit') }, 'Leave (F)')));
   }
 

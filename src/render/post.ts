@@ -9,28 +9,8 @@ const {
   step, abs, length, texture, texture3D, uv, hash, atan, pow, exp, luminance, hue, sqrt,
 } = T;
 
-// ── Glyph atlas: ASCII, braille and block ramps (our ASCII Magic replacement)
-export const RAMPS = [' .:-=+*#%@', '⠀⠁⠃⠇⠏⠟⠿⡿⣿⣿', ' ░░▒▒▓▓███'];
-const GLYPH_PX = 32;
-let atlasTex: THREE.Texture | null = null;
-export function glyphAtlas(): THREE.Texture {
-  if (atlasTex) return atlasTex;
-  const c = document.createElement('canvas');
-  c.width = GLYPH_PX * 10; c.height = GLYPH_PX * RAMPS.length;
-  const ctx = c.getContext('2d')!;
-  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, c.width, c.height);
-  ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  RAMPS.forEach((ramp, row) => {
-    ctx.font = `${row === 0 ? 30 : 34}px VT323, monospace`;
-    [...ramp].forEach((ch, i) => ctx.fillText(ch, i * GLYPH_PX + GLYPH_PX / 2, row * GLYPH_PX + GLYPH_PX / 2 + 1));
-  });
-  const t = new THREE.CanvasTexture(c);
-  t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearFilter; t.generateMipmaps = false;
-  t.flipY = false;
-  atlasTex = t;
-  return t;
-}
-export function rebuildGlyphAtlas() { atlasTex?.dispose(); atlasTex = null; return glyphAtlas(); }
+let ph: THREE.DataTexture | null = null;
+function placeholderTex() { if (!ph) { ph = new THREE.DataTexture(new Uint8Array([0, 0, 0, 0]), 1, 1); ph.needsUpdate = true; } return ph; }
 
 let bayerTex: THREE.DataTexture | null = null;
 function bayer(): THREE.DataTexture {
@@ -90,6 +70,17 @@ export function luts(colourBlind: boolean) {
   return [LUTS[key + 'halo'], LUTS[key + 'bloom'], LUTS[key + 'hush'], LUTS[key + 'undertow']];
 }
 
+function sceneRT(w: number, h: number) {
+  const r = new THREE.RenderTarget(w, h, { count: 2, type: THREE.HalfFloatType, depthBuffer: true, minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, generateMipmaps: false });
+  r.textures[0].name = 'output';
+  r.textures[1].name = 'normal';
+  r.depthTexture = new THREE.DepthTexture(w, h);
+  return r;
+}
+
+/** Scene passes write colour + view normals (MRT) and depth, for the Glyph Suite. */
+export const sceneMRT = T.mrt({ output: T.output, normal: T.normalView });
+
 function rt(w: number, h: number, nearest: boolean, depth = false) {
   const r = new THREE.RenderTarget(w, h, {
     type: THREE.HalfFloatType,
@@ -105,7 +96,7 @@ function rt(w: number, h: number, nearest: boolean, depth = false) {
 export interface PostUniforms {
   time: any; tProgress: any; tKind: any; tActive: any;
   bloomStrength: any; bloomThreshold: any; godrays: any; sunScreen: any;
-  glyph: any; glyphCell: any; glyphRow: any;
+  glyph: any; glyphCell: any; glyphRow: any; glyphTex: any;
   trail: any; trailDecay: any; trailZoom: any; trailRot: any;
   grade: any; gradeW: any; hueRot: any; fringe: any; vignette: any; grain: any; kaleido: any;
   mirror: any; tape: any; staticAmt: any; fadeColor: any; fadeAmount: any; gentle: any;
@@ -114,8 +105,8 @@ export interface PostUniforms {
 
 /** One dreamer's post chain: lo-fi body → hi-fi light → dream lens. */
 export class PanePost {
-  lowA = rt(480, 270, true, true);
-  lowB = rt(480, 270, true, true);
+  lowA = sceneRT(480, 270);
+  lowB = sceneRT(480, 270);
   bright = rt(240, 135, false);
   blurH = rt(240, 135, false);
   blurV = rt(240, 135, false);
@@ -133,8 +124,8 @@ export class PanePost {
     const u: PostUniforms = (this.u = {
       time: uniform(0), tProgress: uniform(0), tKind: uniform(0), tActive: uniform(0),
       bloomStrength: uniform(0.9), bloomThreshold: uniform(0.72), godrays: uniform(0), sunScreen: uniform(new THREE.Vector2(0.5, 0.3)),
-      glyph: uniform(0), glyphCell: uniform(8), glyphRow: uniform(0),
-      trail: uniform(0.5), trailDecay: uniform(0.74), trailZoom: uniform(0.004), trailRot: uniform(0.00175),
+      glyph: uniform(0), glyphCell: uniform(8), glyphRow: uniform(0), glyphTex: null,
+      trail: uniform(0.5), trailDecay: uniform(0.74), trailZoom: uniform(0.0025), trailRot: uniform(0.001),
       grade: uniform(0.55), gradeW: uniform(new THREE.Vector4(0.25, 0.25, 0.25, 0.25)), hueRot: uniform(0),
       fringe: uniform(1), vignette: uniform(0.45), grain: uniform(0.035), kaleido: uniform(0.25),
       mirror: uniform(0), tape: uniform(0), staticAmt: uniform(0), fadeColor: uniform(new THREE.Color(1, 1, 1)), fadeAmount: uniform(0),
@@ -179,7 +170,8 @@ export class PanePost {
 
     const bloomT = texture(this.blurV.texture);
     const hist = (this.histNode = texture(this.out[1].texture));
-    const atlas = texture(glyphAtlas());
+    const glyphLayer = texture(placeholderTex());
+    u.glyphTex = glyphLayer;
     const bay = texture(bayer());
     const [L0, L1, L2, L3] = luts(colourBlind).map((t) => texture3D(t));
     this.lutNodes = [L0, L1, L2, L3];
@@ -262,20 +254,16 @@ export class PanePost {
       }
       col.addAssign(rays.mul(0.12).mul(u.godrays));
 
-      // glyph pass: characters instead of pixels
-      const px = q.mul(u.paneSize);
-      const cellC = floor(px.div(u.glyphCell)).add(0.5).mul(u.glyphCell).div(u.paneSize);
-      const src = A.sample(cellC).rgb.add(bloomT.sample(cellC).rgb.mul(0.6));
-      const gi = floor(clamp(luminance(src), 0.0, 0.999).mul(10.0));
-      const local = fract(px.div(u.glyphCell));
-      const gm = atlas.sample(vec2(gi.add(local.x).div(10.0), u.glyphRow.add(local.y).div(3.0))).r;
-      col.assign(mix(col, src.mul(gm).mul(1.5).add(src.mul(0.04)), u.glyph));
+      // realm effects: the Glyph Suite's layer (characters instead of pixels)
+      const gl = glyphLayer.sample(q);
+      col.assign(mix(col, gl.rgb, u.glyph.mul(gl.a)));
 
       // feedback trails: last frame, zoomed and turned a hair
       const hc = q.sub(0.5);
       const cs = cos(u.trailRot), sn = sin(u.trailRot);
       const hq = vec2(hc.x.mul(cs).sub(hc.y.mul(sn)), hc.x.mul(sn).add(hc.y.mul(cs))).mul(float(1.0).sub(u.trailZoom)).add(0.5);
-      const h = min(hist.sample(hq).rgb, vec3(1.1));
+      const h0 = min(hist.sample(hq).rgb, vec3(1.1));
+      const h = h0.mul(smoothstep(0.35, 0.9, luminance(h0)));
       col.assign(mix(col, max(col, h.mul(u.trailDecay)), u.trail));
 
       // resonance grade: four LUTs blended by chart position
@@ -291,7 +279,8 @@ export class PanePost {
       // worn tape, watcher static
       const scan = sin(q.y.mul(u.lowSize.y).mul(Math.PI)).mul(0.5).add(0.5);
       col.mulAssign(float(1.0).sub(u.tape.mul(0.22).mul(scan)));
-      const nz = hash(q.mul(u.paneSize).add(vec2(u.time.mul(91.0), u.time.mul(37.0))));
+      const gp = floor(q.mul(u.paneSize));
+      const nz = hash(gp.x.add(gp.y.mul(157.13)).add(fract(u.time.mul(7.31)).mul(9137.0)));
       col.addAssign(vec3(nz.sub(0.5)).mul(u.tape.mul(0.18).add(u.staticAmt.mul(0.35))));
       col.assign(mix(col, vec3(nz), u.staticAmt.mul(0.18)));
 
@@ -418,6 +407,8 @@ export class Snapshotter {
   private quad: THREE.QuadMesh;
   private photoQuad: THREE.QuadMesh;
   private crop = uniform(new THREE.Vector4(0, 0, 1, 1));
+  paper = uniform(0);
+  paperColour = uniform(new THREE.Color('#f4ead4'));
   constructor(placeholder: THREE.Texture) {
     this.src = texture(placeholder);
     const m = new THREE.MeshBasicNodeMaterial();
@@ -428,8 +419,9 @@ export class Snapshotter {
     this.quad = new THREE.QuadMesh(m);
     const pm = new THREE.MeshBasicNodeMaterial();
     pm.colorNode = Fn(() => {
-      const c = this.src.sample(this.crop.xy.add(uv().mul(this.crop.zw))).rgb;
-      return pow(clamp(c, 0.0, 1.0), vec3(1 / 2.2));
+      const s4 = this.src.sample(this.crop.xy.add(uv().mul(this.crop.zw)));
+      const lin = mix(s4.rgb, mix(this.paperColour, s4.rgb, s4.a), this.paper);
+      return pow(clamp(lin, 0.0, 1.0), vec3(1 / 2.2));
     })();
     this.photoQuad = new THREE.QuadMesh(pm);
   }
@@ -438,8 +430,9 @@ export class Snapshotter {
     renderer.setRenderTarget(this.small); this.quad.render(renderer); renderer.setRenderTarget(null);
     return (await renderer.readRenderTargetPixelsAsync(this.small, 0, 0, 64, 36)) as Uint8Array;
   }
-  async capture(renderer: THREE.WebGPURenderer, tex: THREE.Texture, aspect: number): Promise<ImageData> {
+  async capture(renderer: THREE.WebGPURenderer, tex: THREE.Texture, aspect: number, paper = false): Promise<ImageData> {
     this.src.value = tex;
+    this.paper.value = paper ? 1 : 0;
     // centre-crop to the polaroid's 4:3
     const target = 4 / 3;
     if (aspect > target) { const w = target / aspect; this.crop.value.set((1 - w) / 2, 0, w, 1); }

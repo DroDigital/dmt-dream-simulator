@@ -78,7 +78,7 @@ export class FractalReef extends Realm {
     for (let i = 0; i < pos.count; i++) { const x = pos.getX(i), z = pos.getZ(i); pos.setY(i, Math.sin(x * 0.08) * Math.cos(z * 0.07) * 1.5); }
     geo.computeVertexNormals();
     this.ground(geo, sand);
-    this.dynamic.add(Object.assign(causticLayer(this, 200, 200, '#ff9ff0', 0.3), { position: new THREE.Vector3(0, 1.6, 0) }));
+    { const cl = causticLayer(this, 200, 200, '#ff9ff0', 0.3); cl.position.y = 1.6; this.dynamic.add(cl); }
     // branching coral: recursive geometric fronds (linked: flesh/water)
     const coralMat = this.mat('coral', { map: this.tex('coral'), emissive: this.c(1), emissiveIntensity: 0.35, film: 0.9, wind: 0.4 });
     const coralMat2 = this.mat('coral2', { map: this.tex('flesh'), emissive: this.c(2), emissiveIntensity: 0.45, film: 0.8, wind: 0.4 });

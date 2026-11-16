@@ -19,7 +19,7 @@ export class PrismCathedral extends Realm {
       ...this.env,
       skyTop: '#d8d0ff', skyHorizon: '#fff4e8', skyBottom: '#c0b0e0',
       fog: deep ? '#3a2a5a' : '#e8e0ff', fogNear: 25, fogFar: 140, sunDir: [0.4, 0.8, -0.3], sunColor: '#fff0e0',
-      skyAmb: '#d8d0f0', groundAmb: '#a898c8', bloom: 1.3, bloomThreshold: 0.62, godrays: 1.2, trail: 0.55, kaleido: 0.35, mandala: 0.3,
+      skyAmb: '#d8d0f0', groundAmb: '#a898c8', bloom: 0.9, bloomThreshold: 0.8, godrays: 0.45, trail: 0.55, kaleido: 0.35, mandala: 0.3,
     };
     const m = M(this);
     const P = 96;
@@ -55,7 +55,7 @@ export class PrismCathedral extends Realm {
       }
     }
     // light shafts: additive slanted boxes
-    const shaftMat = this.mat('shaft', { emissive: '#fff4e0', emissiveIntensity: 0.18, unlit: true, additive: true, noFog: true });
+    const shaftMat = this.mat('shaft', { emissive: '#fff4e0', emissiveIntensity: 0.08, unlit: true, additive: true, noFog: true });
     for (let z = -P * 1.5 + 8; z < P * 1.5; z += 16) {
       const s = new Shape(); s.box(shaftMat, 2.6, 24, 3, 0, 0, 0);
       const o = this.place(s.build(), -2, 10, z, 0);

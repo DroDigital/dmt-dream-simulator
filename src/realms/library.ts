@@ -29,7 +29,7 @@ export class DrownedLibrary extends Realm {
     const N = 9, S = 6;
     const floor = this.mat('lib-floor', { map: this.tex('tile'), color: '#6a9a88', repeat: [30, 30] });
     this.ground(new THREE.PlaneGeometry(N * S + 20, N * S + 20).rotateX(-Math.PI / 2), floor);
-    this.dynamic.add(Object.assign(causticLayer(this, N * S + 20, N * S + 20, '#9fffd8', 0.35), { position: new THREE.Vector3(0, 0.03, 0) }));
+    { const cl = causticLayer(this, N * S + 20, N * S + 20, '#9fffd8', 0.35); cl.position.y = 0.03; this.dynamic.add(cl); }
     const wall = this.mat('lib-wall', { map: this.tex('books', 1), color: '#a8c8b8' });
     const walls = new Shape();
     const L = N * S + 6;

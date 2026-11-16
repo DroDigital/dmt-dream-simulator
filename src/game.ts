@@ -11,7 +11,10 @@ import { Dreamer } from './player';
 import { createRealm } from './realms/registry';
 import type { Realm, Linkable } from './realms/realm';
 import { LanternFlat } from './realms/flat';
-import { PanePost, Compositor, Snapshotter, rebuildGlyphAtlas } from './render/post';
+import { PanePost, Compositor, Snapshotter, sceneMRT } from './render/post';
+import { GlyphSuite } from './render/glyph';
+import { preset, PRESETS, blendStyles, type GlyphStyle } from './render/glyph/styles';
+import { quadrantOf } from './data/types';
 import { G, setPaperTexture } from './render/materials';
 import { TextureBank } from './render/textures';
 import { AudioEngine, type PaneListener } from './audio/audio';
@@ -51,6 +54,9 @@ interface Pane {
   prevFrame: Uint8Array | null;
   polaroid: string;
   lens: string;
+  glyph: GlyphSuite | null;
+  photoPatch: Partial<GlyphStyle>;
+  dissolveSwitched: boolean;
 }
 
 const STEP = 1 / 60;
@@ -183,7 +189,7 @@ export class Game implements GameHooks {
     else this.ui.show('title');
     this.last = performance.now() / 1000;
     this.renderer.setAnimationLoop((ms: number) => this.frame(ms));
-    (window as any).game = this;
+    (window as any).dmt = this;
   }
 
   resize() {
@@ -222,7 +228,8 @@ export class Game implements GameHooks {
     ui.on('achieve', (id: string) => this.achieve(id));
     ui.on('photoShoot', () => this.takePhoto());
     ui.on('photoExit', () => this.togglePhoto());
-    ui.on('photoLens', (l: string) => { if (this.panes[0]) this.panes[0].lens = l; });
+    ui.on('photoLens', (l: string) => { if (this.panes[0]) { this.panes[0].lens = l; this.panes[0].photoPatch = {}; this.panes[0].glyph?.reset(); } });
+    ui.on('photoStyle', (patch: Partial<GlyphStyle>) => { if (this.panes[0]) this.panes[0].photoPatch = { ...this.panes[0].photoPatch, ...patch }; });
     ui.on('newCycle', () => { this.director.newCycle(); this.achieve('cycle'); writeSave(this.save); this.closeUI(); this.enterFlat(); });
     ui.on('endless', () => { this.save.endless = true; writeSave(this.save); this.closeUI(); this.enterFlat(); });
   }
@@ -281,7 +288,7 @@ export class Game implements GameHooks {
 
   makePane(): Pane {
     const post = new PanePost(this.save.settings.colourBlind);
-    return { post, rect: { x: 0, y: 0, w: 1, h: 1 }, transition: null, fade: 0, fadeColor: new THREE.Color(0, 0, 0), bestScore: -1, prevFrame: null, polaroid: '', lens: 'none' };
+    return { post, rect: { x: 0, y: 0, w: 1, h: 1 }, transition: null, fade: 0, fadeColor: new THREE.Color(0, 0, 0), bestScore: -1, prevFrame: null, polaroid: '', lens: 'none', glyph: null, photoPatch: {}, dissolveSwitched: false };
   }
 
   // ── realms ─────────────────────────────────────────────────────────────
@@ -563,6 +570,8 @@ export class Game implements GameHooks {
     const cam = new THREE.PerspectiveCamera(p.camera.fov, p.camera.aspect, 0.05, 2400);
     cam.layers.mask = p.camera.layers.mask;
     pane.transition = { from, to, t: 0, dur, kind, spawn, yaw, vision, cam };
+    pane.dissolveSwitched = false;
+    if (kind === 'dissolve') pane.transition.dur = Math.max(dur, 1.2); // glyph links take a breath longer
     // pre-warm the next realm while the mask still covers the screen
     this.renderer.compileAsync(to.scene, cam).catch(() => {});
   }
@@ -570,6 +579,7 @@ export class Game implements GameHooks {
   finishTransition(p: Dreamer, pane: Pane) {
     const tr = pane.transition!;
     pane.transition = null;
+    pane.glyph?.reset();
     p.enter(tr.to, tr.spawn, tr.yaw, this.director.night.fx);
     p.frozen = false;
     if (tr.vision) this.startVision(p, tr.vision);
@@ -587,7 +597,7 @@ export class Game implements GameHooks {
   // ── photo mode ─────────────────────────────────────────────────────────
   togglePhoto() {
     this.photoMode = !this.photoMode;
-    if (this.photoMode) { this.ui.photo(this.night); document.exitPointerLock?.(); }
+    if (this.photoMode) { this.ui.photo(this.night, Object.keys(PRESETS).sort()); document.exitPointerLock?.(); }
     else { this.ui.hide(); if (this.panes[0]) this.panes[0].lens = 'none'; this.input.requestLock(); }
   }
 
@@ -758,7 +768,7 @@ export class Game implements GameHooks {
       if (!this.save.quietHeard.includes(r.id)) this.save.quietHeard.push(r.id);
       if (DREAM_REALMS.every((x) => this.save.quietHeard.includes(x))) this.achieve('quiet-all');
     }
-    if (p.grounded && p.velocity.lengthSq() > 1 && Math.floor(this.time * 2.2) !== Math.floor((this.time - dt) * 2.2)) this.sfx('step', p.position, r.key, 0.5);
+    if (p.grounded && p.velocity.lengthSq() > 1 && Math.floor(this.time * 2.2) !== Math.floor((this.time - dt) * 2.2)) { this.sfx('step', p.position, r.key, 0.5); this.footfall(p); }
     // watcher near-miss
     for (const e of r.entities) if (e.kind === 'watcher') { const d = e.object.position.distanceTo(p.position); if (d < 3 && d > 0.8) this.achieve('watcher-avoid'); if (d < 25) this.atlas('entity:watcher'); }
     for (const e of r.entities) if (['drifters', 'bookfish', 'moths', 'train'].includes(e.kind)) this.atlas('entity:' + (e.kind === 'train' ? 'conductor' : e.kind));
@@ -841,6 +851,7 @@ export class Game implements GameHooks {
       // the lo-fi body: low-res scene pass
       G.snap.value.set(pane.post.lowW / 2, pane.post.lowH / 2);
       realm.applyEnv(progress, nightYear);
+      this.renderer.setMRT(sceneMRT);
       this.renderer.setRenderTarget(pane.post.lowA);
       this.renderer.render(realm.scene, p.camera);
       const tr = pane.transition;
@@ -855,12 +866,15 @@ export class Game implements GameHooks {
         this.renderer.setRenderTarget(pane.post.lowB);
         this.renderer.render(tr.to.scene, tr.cam);
         realm.applyEnv(progress, nightYear);
+        this.renderer.setMRT(null);
         const e = Math.min(1, tr.t);
         pane.post.u.tProgress.value = e * e * (3 - 2 * e);
         pane.post.u.tKind.value = TRANSITION_INDEX[tr.kind];
         pane.post.u.tActive.value = 1;
       }
+      this.renderer.setMRT(null);
       this.applyPost(p, pane, realm, fx);
+      this.glyphPass(p, pane, realm, fx, pw, ph, dt);
       const tex = pane.post.composite(this.renderer);
       this.compositor.texNodes[i].value = tex;
       this.compositor.rects[i].value.set(rect.x, rect.y, rect.w, rect.h);
@@ -888,8 +902,10 @@ export class Game implements GameHooks {
     this.flat.time = this.time;
     this.flat.applyEnv(0.85, this.save.night);
     G.snap.value.set(pane.post.lowW / 2, pane.post.lowH / 2);
+    this.renderer.setMRT(sceneMRT);
     this.renderer.setRenderTarget(pane.post.lowA);
     this.renderer.render(this.flat.scene, cam);
+    this.renderer.setMRT(null);
     pane.post.u.tActive.value = 0;
     this.applyPost(null, pane, this.flat, {});
     this.compositor.texNodes[0].value = pane.post.composite(this.renderer);
@@ -916,9 +932,6 @@ export class Game implements GameHooks {
       if (behind) u.godrays.value = 0;
     }
     const lens = pane.lens;
-    u.glyph.value = Math.max(e.glyph, fx.glyph ?? 0, lens === 'glyph' || lens === 'braille' || lens === 'blocks' ? 1 : 0);
-    u.glyphCell.value = e.glyphCell ?? 8;
-    u.glyphRow.value = lens === 'braille' ? 1 : lens === 'blocks' ? 2 : fx.glyphRow ?? s.glyphRamp;
     u.trail.value = s.trails ? (fx.trails ?? e.trail) * (gentle ? 0.25 : 1) : 0;
     u.kaleido.value = Math.max(e.kaleido, fx.kaleido ?? 0, lens === 'kaleido' ? 0.9 : 0) * (s.breathing && !gentle ? 1 : 0.15);
     u.fringe.value = gentle ? 0.3 : e.fringe;
@@ -943,6 +956,77 @@ export class Game implements GameHooks {
     u.fadeColor.value.copy(pane.fadeColor);
   }
 
+  // ── the Glyph Suite (realm effects stage) ─────────────────────────────
+  journalSuite: GlyphSuite | null = null;
+
+  /** Which glyph style (if any) this pane wears right now, and how strongly. */
+  glyphStyleFor(p: Dreamer, pane: Pane, realm: Realm, fx: any): { style: GlyphStyle; amount: number } | null {
+    const lens = pane.lens;
+    if (lens !== 'none' && PRESETS[lens]) return { style: { ...preset(lens), ...pane.photoPatch } as GlyphStyle, amount: 1 };
+    if (lens === 'glyph' || lens === 'braille' || lens === 'blocks') return { style: { ...preset(lens === 'glyph' ? 'glyph-night-1' : lens === 'braille' ? 'glyph-night-2' : 'glyph-night-3'), ...pane.photoPatch } as GlyphStyle, amount: 1 };
+    const res = this.phase === 'night' ? this.director.night.resonance[this.players.indexOf(p)] ?? this.save.resonance : this.save.resonance;
+    const night = this.director?.night;
+    let base: GlyphStyle | null = null, amount = 0;
+    if (realm.id === 'desert') {
+      base = preset({ halo: 'desert-day', bloom: 'desert-bloom', hush: 'desert-night', undertow: 'desert-undertow' }[quadrantOf(res)]);
+      amount = 1;
+    }
+    if (fx.glyph && night) {
+      const n = fx.glyphRow === 1 ? [2, 7][night.seed % 2] : 1 + (night.seed % 8);
+      base = base ?? preset(`glyph-night-${n}`);
+      amount = Math.max(amount, fx.glyph);
+    }
+    const ov = realm.overrides.glyph;
+    if (ov !== undefined && ov > 0) { base = base ?? preset('glyph-night-1'); amount = Math.max(amount, ov); }
+    const tr = pane.transition;
+    if (tr && tr.kind === 'dissolve') {
+      // the departing realm blends into glyphs, characters dissolve, the arriving realm resolves out
+      const k = Math.sin(Math.min(1, tr.t) * Math.PI);
+      const st = base ?? preset('glyph-night-1');
+      return { style: { ...st, coverage: st.coverage * (1 - 0.75 * Math.sin(Math.min(1, tr.t) * Math.PI) ** 2) }, amount: Math.max(amount, k) };
+    }
+    return base && amount > 0 ? { style: base, amount } : null;
+  }
+
+  glyphPass(p: Dreamer, pane: Pane, realm: Realm, fx: any, pw: number, ph: number, dt: number) {
+    const want = this.glyphStyleFor(p, pane, realm, fx);
+    const u = pane.post.u;
+    if (!want) { u.glyph.value = 0; return; }
+    const g = (pane.glyph ??= new GlyphSuite());
+    if (g.style.name !== want.style.name || pane.lens !== 'none') { g.setPalette(realm.pal); }
+    g.setStyle(want.style);
+    const tr = pane.transition;
+    let src = pane.post.lowA;
+    if (tr && tr.kind === 'dissolve' && tr.t >= 0.5) {
+      src = pane.post.lowB;
+      if (!pane.dissolveSwitched) { pane.dissolveSwitched = true; g.reset(); g.setPalette(tr.to.pal); }
+    }
+    const tex = g.render(this.renderer, {
+      scene: src.textures[0], normal: src.textures[1], depth: src.depthTexture!, near: p.camera.near, far: p.camera.far,
+      paneW: pw * (this.players.length > 2 ? 0.75 : 1), paneH: ph * (this.players.length > 2 ? 0.75 : 1), fov: p.camera.fov, dt, time: this.time,
+      gaze: Math.min(1, Math.max(0, (p.lookCalm - 0.5) / 0.5)), lucidity: Math.min(3, Math.floor(p.stillTime / 6)),
+      gentle: this.save.settings.gentle || p.profile.gentle, windZone: realm.id === 'desert' ? 2 : 1, drift: realm.id === 'desert' ? 1 : 0, driftZone: 1,
+      quality: this.players.length > 2 ? 2 : 1,
+    });
+    u.glyphTex.value = tex;
+    u.glyph.value = want.amount;
+  }
+
+  /** Footsteps ripple through the glyph layer of every pane that can see them. */
+  footfall(p: Dreamer) {
+    this.players.forEach((q, i) => {
+      const pane = this.panes[i];
+      if (!pane?.glyph || q.realmKey !== p.realmKey) return;
+      this.v.copy(p.position).project(q.camera);
+      if (this.v.z > 1 || Math.abs(this.v.x) > 1.1 || Math.abs(this.v.y) > 1.1) {
+        // your own feet are below the frame: ripple from the bottom edge
+        if (q === p) pane.glyph.addRipple({ x: 0.5, y: 1.02, t: this.time, strength: 1 });
+        return;
+      }
+      pane.glyph.addRipple({ x: this.v.x * 0.5 + 0.5, y: 0.5 - this.v.y * 0.5, t: this.time, strength: 1 });
+    });
+  }
+
   /** Once per second, score a pane's frame; keep the most striking as its polaroid. */
   scoreFrames(dt: number) {
     if (this.phase !== 'night') return;
@@ -960,7 +1044,14 @@ export class Game implements GameHooks {
       pane.prevFrame = px.slice();
       if (sc > pane.bestScore) {
         pane.bestScore = sc;
-        const img = await this.snap.capture(this.renderer, tex, aspect);
+        // polaroids get the journal-print glyph style: ink on paper
+        const js = (this.journalSuite ??= new GlyphSuite());
+        js.setStyle(preset('journal-print'));
+        js.setPalette(p.realm?.pal ?? ['#3a2c2a', '#3a2c2a', '#3a2c2a', '#3a2c2a', '#3a2c2a']);
+        js.reset();
+        const low = pane.post.lowA;
+        const printTex = js.render(this.renderer, { scene: low.textures[0], normal: low.textures[1], depth: low.depthTexture!, near: p.camera.near, far: p.camera.far, paneW: 640, paneH: 640 / aspect, fov: p.camera.fov, dt: 1 / 60, time: this.time, gaze: 1, lucidity: 3, gentle: true });
+        const img = await this.snap.capture(this.renderer, printTex, aspect, true);
         pane.polaroid = imageDataToDataURL(img, this.backend === 'webgl');
       }
     }).catch(() => {});
@@ -972,4 +1063,4 @@ import * as LAWS_MOD from './data/laws';
 import * as EVENTS_MOD from './data/events';
 function require_laws() { return LAWS_MOD; }
 function require_events() { return EVENTS_MOD; }
-void rebuildGlyphAtlas; void depthOf;
+void depthOf;

@@ -15,7 +15,8 @@ for (const r of realms) {
   await page.waitForTimeout(+(process.env.WAIT ?? 12000));
   await page.screenshot({ path: `screenshots/realm-${r}${process.env.TAG ?? ''}.png` });
   const err = await page.evaluate(() => window.err);
-  console.log(r, err ?? '', [...new Set(logs)].slice(0, 6).join('\n  '));
+  const st = await page.evaluate(() => window.dmt && JSON.stringify({ phase: dmt.phase, realm: dmt.players[0]?.realm?.id, links: dmt.director?.night?.links?.length }));
+  console.log(r, st, err ?? '', [...new Set(logs)].slice(0, 6).join('\n  '));
   await page.close();
 }
 await browser.close();

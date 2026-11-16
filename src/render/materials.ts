@@ -230,7 +230,7 @@ export function makeSky(): { mesh: THREE.Mesh; u: SkyUniforms } {
     col = col.add(vec3(1.0).mul(smoothstep(0.985, 1.0, st)).mul(tw).mul(u.stars).mul(smoothstep(0.0, 0.3, y)));
     // sun glow
     const sd = max(dot(d, u.sun), 0.0);
-    col = col.add(u.sunColor.mul(pow(sd, 64.0).mul(1.5).add(pow(sd, 6.0).mul(0.25))));
+    col = col.add(u.sunColor.mul(pow(sd, 256.0).mul(1.2).add(pow(sd, 8.0).mul(0.1))));
     // moons
     const ma = smoothstep(0.9993, 0.9996, dot(d, u.moonA));
     const mb = smoothstep(0.9990, 0.9994, dot(d, u.moonB));

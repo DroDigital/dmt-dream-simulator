@@ -1,0 +1,49 @@
+{
+  "name": "desert-undertow",
+  "mode": "braille",
+  "font": "VT323",
+  "ramp": "⠀⠁⠃⠇⠏⠟⠿⡿⣿⣿",
+  "cellPx": 8,
+  "depthCells": true,
+  "depthNear": 6,
+  "depthFar": 40,
+  "cellSizes": [
+    12,
+    8,
+    6
+  ],
+  "edgeThreshold": 0.35,
+  "edgeDepthWeight": 1,
+  "edgeNormalWeight": 0.8,
+  "edgeLumaWeight": 0.6,
+  "edgeThickness": 1,
+  "backdropMode": "blurred",
+  "backdropStrength": 0.35,
+  "backdropBlur": 2,
+  "colourMode": "palette",
+  "colourSaturation": 1.1,
+  "colourBoost": 1.35,
+  "black": 0.04,
+  "white": 0.9,
+  "gamma": 0.9,
+  "contrast": 0.4,
+  "coverage": 1,
+  "invert": false,
+  "shadowLift": true,
+  "hysteresis": 0.06,
+  "holdFrames": 3,
+  "wind": {
+    "speed": 1.6,
+    "dir": [
+      0.8,
+      0.4
+    ]
+  },
+  "ripples": true,
+  "gazeSettle": true,
+  "paper": {
+    "aberration": 0.35,
+    "flutedGlass": 0
+  },
+  "glyphOpacity": 1
+}
