@@ -40,5 +40,6 @@
     "flutedGlass": 0
   },
   "glyphOpacity": 1,
-  "scanlines": 0.5
+  "scanlines": 0.5,
+  "inkColour": "#d8e8d0"
 }

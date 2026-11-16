@@ -39,5 +39,6 @@
     "aberration": 0,
     "flutedGlass": 0
   },
-  "glyphOpacity": 1
+  "glyphOpacity": 1,
+  "inkColour": "#f4ead4"
 }
