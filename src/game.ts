@@ -987,6 +987,11 @@ export class Game implements GameHooks {
     const ov = realm.overrides.glyph;
     if (ov !== undefined && ov > 0) { base = base ?? preset('glyph-night-1'); amount = Math.max(amount, ov); }
     const tr = pane.transition;
+    if (tr && tr.kind === 'dissolve' && tr.t >= 0.5 && realm !== tr.to) {
+      // past the switch the arriving realm is on screen: use its own glyph look
+      const arriving = this.glyphStyleFor(p, { ...pane, transition: null } as Pane, tr.to, fx);
+      if (arriving) { base = arriving.style; amount = arriving.amount; } else { base = null; amount = 0; }
+    }
     if (tr && tr.kind === 'dissolve') {
       // the departing realm blends into glyphs, characters dissolve, the arriving realm resolves out
       const t = Math.min(1, tr.t);
@@ -995,7 +1000,8 @@ export class Game implements GameHooks {
       const st = base ?? preset('glyph-night-1');
       // characters thin out around the switch, then the new realm resolves out of them
       const thin = 1 - 0.8 * Math.exp(-((t - 0.5) ** 2) / 0.01);
-      return { style: { ...st, coverage: st.coverage * thin }, amount: Math.max(amount, k) };
+      const keep = tr.t >= 0.5 ? amount : 0; // arriving in a glyph realm: stay in glyphs
+      return { style: { ...st, coverage: st.coverage * thin }, amount: Math.max(keep, k, tr.t < 0.5 ? amount : 0) };
     }
     return base && amount > 0 ? { style: base, amount } : null;
   }
