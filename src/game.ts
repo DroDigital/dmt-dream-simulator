@@ -576,7 +576,7 @@ export class Game implements GameHooks {
     cam.layers.mask = p.camera.layers.mask;
     pane.transition = { from, to, t: 0, dur, kind, spawn, yaw, vision, cam };
     pane.dissolveSwitched = false;
-    if (kind === 'dissolve') pane.transition.dur = Math.max(dur, 1.2); // glyph links take a breath longer
+    if (kind === 'dissolve') pane.transition.dur = Math.max(dur, 1.6); // glyph links take a breath longer
     // pre-warm the next realm while the mask still covers the screen
     this.renderer.compileAsync(to.scene, cam).catch(() => {});
   }
@@ -875,7 +875,9 @@ export class Game implements GameHooks {
         this.renderer.setMRT(null);
         const e = Math.min(1, tr.t);
         pane.post.u.tProgress.value = e * e * (3 - 2 * e);
-        pane.post.u.tKind.value = TRANSITION_INDEX[tr.kind];
+        // a glyph link hides a hard switch under the glyph layer
+        if (tr.kind === 'dissolve') pane.post.u.tProgress.value = tr.t >= 0.5 ? 1 : 0;
+        pane.post.u.tKind.value = tr.kind === 'dissolve' ? 0 : TRANSITION_INDEX[tr.kind];
         pane.post.u.tActive.value = 1;
       }
       this.renderer.setMRT(null);
@@ -987,9 +989,13 @@ export class Game implements GameHooks {
     const tr = pane.transition;
     if (tr && tr.kind === 'dissolve') {
       // the departing realm blends into glyphs, characters dissolve, the arriving realm resolves out
-      const k = Math.sin(Math.min(1, tr.t) * Math.PI);
+      const t = Math.min(1, tr.t);
+      const ss = (a: number, b: number, x: number) => { const v = Math.min(1, Math.max(0, (x - a) / (b - a))); return v * v * (3 - 2 * v); };
+      const k = ss(0, 0.3, t) * (1 - ss(0.7, 1, t));
       const st = base ?? preset('glyph-night-1');
-      return { style: { ...st, coverage: st.coverage * (1 - 0.75 * Math.sin(Math.min(1, tr.t) * Math.PI) ** 2) }, amount: Math.max(amount, k) };
+      // characters thin out around the switch, then the new realm resolves out of them
+      const thin = 1 - 0.8 * Math.exp(-((t - 0.5) ** 2) / 0.01);
+      return { style: { ...st, coverage: st.coverage * thin }, amount: Math.max(amount, k) };
     }
     return base && amount > 0 ? { style: base, amount } : null;
   }

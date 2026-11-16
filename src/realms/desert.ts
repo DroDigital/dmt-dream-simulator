@@ -18,9 +18,9 @@ export class GlyphDesert extends Realm {
     const deep = this.ctx.deep;
     this.env = {
       ...this.env,
-      skyTop: '#05040a', skyHorizon: deep ? '#2a1a10' : '#6a5030', skyBottom: '#0a0806',
-      fog: deep ? '#0a0806' : '#6a5038', fogNear: 40, fogFar: 240, sunDir: [0.6, 0.35, -0.5], sunColor: '#ffd8a0',
-      skyAmb: '#8a7a6a', groundAmb: '#3a2a1a', bloom: 0.9, glyph: 1, glyphCell: 9, trail: 0.4, kaleido: 0.1, stars: 1.2, mandala: 0.9, grade: 0.4,
+      skyTop: '#03020a', skyHorizon: deep ? '#1a1008' : '#3a2814', skyBottom: '#050404',
+      fog: deep ? '#0a0806' : '#2a1e14', fogNear: 60, fogFar: 320, sunDir: [0.6, 0.45, -0.5], sunColor: '#ffe0b0',
+      skyAmb: '#9a8a7a', groundAmb: '#4a3a2a', bloom: 0.9, glyph: 1, glyphCell: 9, trail: 0.35, kaleido: 0.08, stars: 1.4, mandala: 1.0, grade: 0.3,
     };
     const m = M(this);
     const sand = this.mat('sand', { map: this.tex('sand'), color: '#e8c890', repeat: [60, 60] });
