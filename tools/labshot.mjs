@@ -1,0 +1,12 @@
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const pw = require('/opt/node-tools/node_modules/playwright');
+const browser = await pw.chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const page = await browser.newPage({ viewport: { width: 960, height: 540 } });
+page.on('pageerror', (e) => console.log('pageerror', e.message));
+await page.goto(process.argv[2]);
+await page.waitForFunction(() => window.labReady || window.err, null, { timeout: 60000 });
+await page.evaluate(() => { lab.setAuto(false); });
+await page.evaluate((p) => { if (p) lab.setPreset(p); lab.step(20); }, process.argv[4] || '');
+await page.screenshot({ path: process.argv[3] });
+await browser.close();

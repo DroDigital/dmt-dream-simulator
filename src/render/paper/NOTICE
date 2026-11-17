@@ -1,0 +1,14 @@
+Paper Shaders
+Copyright 2026 Paper
+
+Powered by Paper Shaders:
+https://shaders.paper.design
+
+The Fluted Glass effect in this folder is a TSL port of the Fluted Glass
+shader from @paper-design/shaders (v0.0.82), licensed under the Apache
+License, Version 2.0 (see /licenses/Apache-2.0.txt). It was changed: ported
+from GLSL to three.js TSL, margins and grain removed, blur limited to a few
+taps, and parameters mapped onto DMT's GlyphStyle.paper.flutedGlass.
+
+The Aberration effect is not in that package version; it is an original
+implementation of the same idea (RGB channel offset along a radial direction).
